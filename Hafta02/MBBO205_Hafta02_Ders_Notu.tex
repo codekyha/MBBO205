@@ -1,0 +1,361 @@
+% MBBO205 Bulut Bilişim ve Yapay Zekâ -- Hafta 2 Ders Notu
+% Derleme: xelatex MBBO205_Hafta01_Ders_Notu.tex (iki kez)
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setdefaultlanguage{turkish}
+\setmainfont{TeX Gyre Pagella}
+\setsansfont{TeX Gyre Heros}
+\setmonofont{DejaVu Sans Mono}[Scale=0.85]
+
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs,tabularx,array}
+\usepackage{enumitem}
+\usepackage{fvextra}
+\usepackage[most]{tcolorbox}
+\usepackage{titlesec}
+\usepackage{needspace}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{lacivert}{HTML}{14213D}
+\definecolor{turuncu}{HTML}{A94E17}
+\definecolor{kum}{HTML}{EDEBE4}
+\definecolor{kod}{HTML}{1B2A4A}
+\definecolor{gri}{HTML}{4A5568}
+
+\titleformat{\section}{\needspace{8\baselineskip}\sffamily\Large\bfseries\color{lacivert}}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\needspace{5\baselineskip}\sffamily\large\bfseries\color{lacivert}}{\thesubsection}{0.6em}{}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\setlist{itemsep=0.2em,topsep=0.3em}
+\renewcommand{\arraystretch}{1.25}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\sffamily MBBO205 · Hafta 2}
+\fancyhead[R]{\small\sffamily Dr. Öğr. Üyesi Hasan Oğuz}
+\fancyfoot[C]{\small\sffamily\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\newtcolorbox{kutu}[1][]{colback=kum,colframe=kum,arc=2mm,boxrule=0pt,left=3mm,right=3mm,top=2mm,bottom=2mm,#1}
+\newtcolorbox{uyari}[1][]{colback=white,colframe=turuncu,arc=2mm,boxrule=0.8pt,left=3mm,right=3mm,top=2mm,bottom=2mm,title={#1},coltitle=white,colbacktitle=turuncu,fonttitle=\sffamily\bfseries}
+\DefineVerbatimEnvironment{kodblok}{Verbatim}{breaklines,fontsize=\small,frame=single,rulecolor=\color{gri},framesep=2mm}
+
+\begin{document}
+
+\begin{tcolorbox}[colback=lacivert,colframe=lacivert,arc=2mm,left=5mm,right=5mm,top=4mm,bottom=4mm]
+\color{white}\sffamily
+{\small İSTANBUL OKAN ÜNİVERSİTESİ · MESLEK YÜKSEKOKULU · 2026–2027 GÜZ}\\[3mm]
+{\LARGE\bfseries MBBO205 Bulut Bilişim ve Yapay Zekâ}\\[1mm]
+{\large Hafta 2 Ders Notu: Linux sistem yönetimi}\\[1mm]
+{\small İşletim sistemi, süreçler, bellek, izinler, paketler, servisler ve SSH}\\[3mm]
+{\small Dr. Öğr. Üyesi Hasan Oğuz}
+\end{tcolorbox}
+
+\begin{kutu}
+\textbf{Bu haftanın hedefleri.} Hafta sonunda öğrenci (i) çekirdeğin süreç, bellek, dosya ve aygıt yönetimindeki rolünü açıklar; (ii) süreçleri izler ve sinyallerle yönetir, bir modelin belleğe sığıp sığmayacağını kaba hesapla kestirir; (iii) kullanıcı, grup ve izinleri en az yetki ilkesine göre düzenler; (iv) apt ile paket, systemd ile servis yönetir; (v) SSH anahtarıyla uzak sunucuya bağlanıp tmux içinde kalıcı oturum açar. \\[1mm]
+\textbf{İlgili kazanımlar:} DÖK1, DÖK2, DÖK7 \quad \textbf{Süre:} 1 saat teori + 1 saat uygulama
+\end{kutu}
+
+\tableofcontents
+
+%==============================================================
+\section{İşletim sistemi YZ'yi nasıl taşır?}
+
+\subsection{Çekirdeğin dört görevi}
+İşletim sisteminin çekirdeği (Linux), donanımı programlardan yalıtır ve dört temel görev üstlenir:
+\begin{enumerate}
+  \item \textbf{Süreç yönetimi:} hangi programın ne zaman, hangi işlemci çekirdeğinde çalışacağına karar verir (zamanlayıcı).
+  \item \textbf{Bellek yönetimi:} her sürece yalıtılmış bir sanal adres alanı verir ve bunu fiziksel RAM'e eşler.
+  \item \textbf{Dosya sistemi:} veriyi diskte adlandırır, saklar ve izinleri denetler.
+  \item \textbf{Aygıt ve ağ:} GPU, disk ve ağ kartını sürücüler aracılığıyla programlara sunar.
+\end{enumerate}
+Bir PyTorch eğitimi bu dört görevin hepsine aynı anda ihtiyaç duyar: bir süreç olarak çalışır, RAM ve GPU belleği (VRAM) ister, veri dosyalarını okur ve GPU'ya sürücü üzerinden erişir.
+
+\subsection{Katmanlar ve sistem çağrısı}
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l Y@{}}
+\toprule
+\textbf{Katman} & \textbf{Örnek} \\
+\midrule
+Uygulama & \texttt{train.py}, Jupyter \\
+Kütüphane & PyTorch, NumPy, glibc, CUDA çalışma zamanı \\
+Sistem çağrısı & \texttt{open}, \texttt{read}, \texttt{mmap}, \texttt{fork}, \texttt{execve} \\
+Çekirdek & Linux: zamanlayıcı, bellek yöneticisi, sürücüler \\
+Donanım & CPU, RAM, GPU, disk, ağ kartı \\
+\bottomrule
+\end{tabularx}
+\end{center}
+Kullanıcı alanındaki programlar çekirdeğe yalnızca \textbf{sistem çağrıları} aracılığıyla erişir. Bu sınır güvenliğin temelidir: bir programın hatası diğer programları veya çekirdeği doğrudan bozamaz.
+
+%==============================================================
+\section{Süreçler}
+
+\subsection{Temel kavramlar}
+Çalışan her program bir \textbf{süreçtir} (process). Her sürecin benzersiz bir numarası (\textbf{PID}) vardır. Kabuk bir komutu çalıştırırken kendini \texttt{fork} ile kopyalar, kopya da \texttt{exec} ile yeni programı belleğe yükler; bu yüzden süreçler bir ebeveyn–çocuk ağacı oluşturur. Bir süreç çalışıyor (R), uyuyor (S), durdurulmuş (T) veya zombi (Z) durumunda olabilir. Komutun sonuna \texttt{\&} eklemek süreci arka plana atar.
+
+\subsection{Sinyaller}
+Süreçlere kısa mesajlar (sinyaller) gönderilerek yönetilirler \cite{signal7}.
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l c l Y@{}}
+\toprule
+\textbf{Sinyal} & \textbf{No} & \textbf{Nasıl gönderilir} & \textbf{Etkisi} \\
+\midrule
+SIGINT & 2 & \texttt{Ctrl+C} & Kibar kesme; program yakalayıp temizlik yapabilir \\
+SIGTERM & 15 & \texttt{kill PID} & Sonlanma isteği; varsayılan sinyal \\
+SIGKILL & 9 & \texttt{kill -9 PID} & Zorla öldürme; yakalanamaz \\
+SIGTSTP & 20 & \texttt{Ctrl+Z} & Duraklatır; \texttt{fg}/\texttt{bg} ile sürer \\
+SIGHUP & 1 & Terminal kapanınca & Oturuma bağlı süreçleri sonlandırır \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\begin{uyari}{Önce SIGTERM, son çare SIGKILL}
+SIGKILL yakalanamaz; süreç temizlik yapamadan ölür ve yazmakta olduğu model kontrol noktası (checkpoint) bozulabilir. Uzun eğitim betikleri SIGTERM geldiğinde kontrol noktası kaydedecek biçimde yazılmalıdır.
+\end{uyari}
+
+%==============================================================
+\section{Bellek}
+
+\subsection{Sanal bellek, swap ve OOM killer}
+Her süreç kendini belleğin tamamının sahibi sanır; çekirdek bu \textbf{sanal adresleri} sayfalar hâlinde fiziksel RAM'e eşler \cite{kernelmm}. RAM dolduğunda az kullanılan sayfalar diske (\textbf{swap}) taşınır; sistem çalışmaya devam eder ama çok yavaşlar. Swap da tükenirse çekirdeğin \textbf{OOM killer} bileşeni en çok bellek kullanan süreci SIGKILL ile sonlandırır. Belirti: eğitim hiçbir Python hatası vermeden yalnızca \texttt{Killed} yazarak kapanır. Teşhis: \texttt{sudo dmesg | grep -i oom}.
+
+\subsection{Bir model belleğe sığar mı?}
+Bir modelin yalnızca ağırlıklarını tutmak için gereken bellek, parametre sayısı $N_{\text{param}}$ ile parametre başına bayt $b$'nin çarpımıdır:
+\begin{equation}
+M \approx N_{\text{param}} \times b .
+\end{equation}
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Sayı biçimi} & \textbf{$b$ (bayt)} & \textbf{7 milyar parametre} \\
+\midrule
+fp32 & 4 & 28 GB \\
+fp16 / bf16 & 2 & 14 GB \\
+int8 & 1 & 7 GB \\
+int4 & 0,5 & 3,5 GB \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{kutu}
+\textbf{Çözümlü örnek.} 8 GB RAM'li bir dizüstünde 7 milyar parametreli bir dil modeli çalışır mı? fp16'da $7\times10^{9}\times 2\,\text{B} = 14$ GB gerekir: sığmaz. int4'e nicemlenmiş sürüm $7\times10^{9}\times 0{,}5\,\text{B} = 3{,}5$ GB ağırlık ister; işletim sistemi ve bağlam önbelleği için pay bırakılırsa çalışabilir. Eğitim çok daha pahalıdır: Adam optimizasyonuyla her parametre için ağırlık, gradyan ve iki moment tutulur; bu, parametre başına yaklaşık 16 bayt demektir \cite{zero}. Aynı modeli eğitmek için yalnızca bu durumlar $7\times10^{9}\times16 \approx 112$ GB gerektirir; etkinleştirmeler (activations) bunun üstüne eklenir. Formül bu nedenle bir alt sınırdır.
+\end{kutu}
+
+%==============================================================
+\section{Kullanıcılar ve izinler}
+
+\subsection{Üç sınıf, üç bit}
+Her dosyanın bir sahibi (\textbf{u}), bir grubu (\textbf{g}) ve bir de ``diğerleri'' (\textbf{o}) vardır. Her sınıf için okuma (\textbf{r}), yazma (\textbf{w}) ve çalıştırma (\textbf{x}) izni ayrı ayrı tanımlanır. Her sınıfın izni tek bir sekizlik rakamla yazılır:
+\begin{equation}
+m = 4r + 2w + x, \qquad r, w, x \in \{0, 1\}.
+\end{equation}
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l l Y@{}}
+\toprule
+\textbf{Sayı} & \textbf{Sembol} & \textbf{Tipik kullanım} \\
+\midrule
+755 & \texttt{rwxr-xr-x} & Betikler ve dizinler \\
+644 & \texttt{rw-r--r--} & Normal dosyalar \\
+700 & \texttt{rwx------} & \texttt{\textasciitilde/.ssh} dizini \\
+600 & \texttt{rw-------} & Özel anahtar, \texttt{authorized\_keys} \\
+2770 & \texttt{rwxrws---} & Grupla paylaşılan veri dizini (setgid) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\begin{kutu}
+\textbf{Çözümlü örnek.} \texttt{chmod 750 rapor.sh} ne yapar? $7 = 4+2+1$: sahip okur, yazar, çalıştırır. $5 = 4+1$: grup okur ve çalıştırır. $0$: diğerleri hiçbir şey yapamaz. Sonuç \texttt{rwxr-x---}. \emph{Dizinlerde} \texttt{x} biti ``dizine girme'' iznidir: \texttt{r} olup \texttt{x} yoksa \texttt{ls} dosya adlarını listeler ama \texttt{cd} başarısız olur.
+\end{kutu}
+Başa eklenen dördüncü rakam özel bitleri taşır: \textbf{2} (setgid) bir dizinde oluşturulan yeni dosyaların dizinin grubunu miras almasını sağlar; ekip çalışması için idealdir.
+
+\subsection{En az yetki ilkesi}
+\texttt{root} kullanıcısı (UID 0) tüm izin denetimlerini atlar. Bu yüzden günlük çalışma normal kullanıcıyla yapılır; yönetim işleri tek tek \texttt{sudo} ile yürütülür ve her kullanım günlüğe yazılır. Paylaşım için dizini \texttt{777} yapmak yerine bir grup oluşturup dizine \texttt{2770} izni vermek doğrudur. Veritabanı ve web servisleri kendi kısıtlı kullanıcılarıyla çalışır; biri ele geçirilse bile saldırganın yetkisi sınırlı kalır.
+
+%==============================================================
+\section{Paketler ve servisler}
+
+\subsection{Kim neyi kurar?}
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l Y l@{}}
+\toprule
+\textbf{Araç} & \textbf{Neyi yönetir} & \textbf{Örnek} \\
+\midrule
+\texttt{apt} & Sistem paketleri (Ubuntu depoları) & \texttt{sudo apt install htop} \\
+\texttt{pip} & Python paketleri (PyPI) & \texttt{pip install numpy} \\
+\texttt{uv} & Hızlı Python ortamı ve paket yöneticisi & \texttt{uv pip install pandas} \\
+\texttt{conda} & Python ve derlenmiş kütüphaneler & \texttt{conda install pytorch} \\
+\texttt{docker} & Tüm ortam bir imajda (hafta 8) & \texttt{docker pull postgres} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+Kural: sistem araçları \texttt{apt} ile, proje kütüphaneleri bir sanal ortama kurulur. Ubuntu 24.04, sistem Python'una \texttt{pip} ile paket kurulmasını PEP 668 ile engeller (hafta 5).
+
+\subsection{systemd}
+Arka planda sürekli çalışan programlara servis (daemon) denir: SSH sunucusu, veritabanı, model API'si, Jupyter. Ubuntu'da bunları \textbf{systemd} yönetir: açılışta başlatır, çökerse yeniden başlatır, günlüklerini \textbf{journald} içinde toplar. Bir servisin tarifi bir \emph{unit} dosyasıdır \cite{systemd}. 14. haftada model servisimizi aşağıdakine benzer bir dosyayla çalıştıracağız:
+\begin{kodblok}
+# /etc/systemd/system/mbbo205-demo.service
+[Unit]
+Description=MBBO205 ornek servis
+After=network.target
+
+[Service]
+User=ogrenci
+WorkingDirectory=/home/ogrenci/mbbo205
+ExecStart=/usr/bin/python3 -m http.server 8000
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+\end{kodblok}
+\texttt{sudo systemctl daemon-reload \&\& sudo systemctl enable --now mbbo205-demo} ile etkinleştirilir; \texttt{journalctl -u mbbo205-demo} ile günlüğü okunur.
+
+%==============================================================
+\section{SSH ve anahtar tabanlı kimlik doğrulama}
+Parola yerine bir \textbf{anahtar çifti} kullanılır \cite{sshkeygen}:
+\begin{enumerate}
+  \item \texttt{ssh-keygen} bir özel (\texttt{id\_ed25519}) ve bir açık (\texttt{id\_ed25519.pub}) anahtar üretir.
+  \item Açık anahtar sunucudaki \texttt{\textasciitilde/.ssh/authorized\_keys} dosyasına eklenir.
+  \item Bağlanırken sunucu bir meydan okuma gönderir; istemci onu özel anahtarla imzalar.
+  \item Sunucu imzayı açık anahtarla doğrular; parola ağda hiç dolaşmaz.
+\end{enumerate}
+Özel anahtar bilgisayarınızdan asla çıkmaz, paylaşılmaz ve Git deposuna girmez. SSH sunucusu (\texttt{sshd}) güvenlik için dosya izinlerini denetler: \texttt{StrictModes} açıkken (varsayılan) başkalarının yazabildiği bir \texttt{.ssh} dizinini güvensiz sayar ve anahtarı reddeder \cite{sshdconfig}.
+
+%==============================================================
+\section{Uygulama}
+
+\subsection{Kullanıcı ve grup}
+\begin{kodblok}
+whoami; id; groups
+sudo adduser deneme
+sudo groupadd ai-lab
+sudo usermod -aG ai-lab $USER      # -a unutulursa diğer gruplardan çıkarılırsınız
+sudo usermod -aG ai-lab deneme
+getent group ai-lab
+newgrp ai-lab                      # üyelik yeni oturumda geçerli olur
+\end{kodblok}
+
+\subsection{İzinler ve paylaşımlı dizin}
+\begin{kodblok}
+ls -l ~/mbbo205/hafta01
+chmod 644 env_report.sh; ls -l env_report.sh
+chmod u+x env_report.sh
+sudo mkdir -p /srv/veri
+sudo chgrp ai-lab /srv/veri
+sudo chmod 2770 /srv/veri
+ls -ld /srv/veri                   # drwxrws--- beklenir; s = setgid
+\end{kodblok}
+
+\subsection{Paketler ve süreçler}
+\begin{kodblok}
+sudo apt update                    # yalnızca paket listesini yeniler
+apt show htop
+sudo apt install -y htop tmux tree
+dpkg -L tmux | grep bin
+sleep 600 &                        # arka planda uzun bir iş
+jobs; pgrep -a sleep
+htop                               # F6 sırala, F9 sinyal gönder, q çık
+kill %1                            # SIGTERM
+sudo dmesg | grep -i oom           # OOM olayları var mı?
+\end{kodblok}
+
+\subsection{tmux}
+Terminal kapandığında SIGHUP oturumdaki süreçleri sonlandırır. tmux oturumu terminalden bağımsız yaşar; SSH bağlantısı kopsa bile içindeki eğitim devam eder.
+\begin{kodblok}
+tmux new -s egitim
+for i in $(seq 300); do date; sleep 1; done
+# Ctrl+b d  -> oturumdan ayrıl (detach)
+tmux ls
+tmux attach -t egitim
+\end{kodblok}
+
+\subsection{SSH sunucusu ve anahtar}
+\begin{kodblok}
+sudo apt install -y openssh-server
+sudo systemctl enable --now ssh
+systemctl status ssh
+sudo ss -tlnp | grep :22
+journalctl -u ssh -n 20 --no-pager
+ssh-keygen -t ed25519 -C "ogrenci@okan"
+ssh-copy-id ogrenci@localhost
+ssh ogrenci@localhost
+\end{kodblok}
+WSL kullananlar bu hafta kendi makinelerine \texttt{localhost} üzerinden bağlanır. Güncel Ubuntu WSL imajlarında systemd açıktır; kapalıysa \texttt{/etc/wsl.conf} dosyasına \texttt{[boot]} bölümü altında \texttt{systemd=true} yazılır ve PowerShell'de \texttt{wsl --shutdown} çalıştırılır. Kısa ad için \texttt{\textasciitilde/.ssh/config}:
+\begin{kodblok}
+Host lab
+    HostName localhost
+    User ogrenci
+\end{kodblok}
+
+%==============================================================
+\section{Laboratuvar görevi}
+
+\subsection{Ana görev: uzak servis durum raporu (yaklaşık 20 dakika)}
+\begin{kodblok}
+cat > rapor.sh << 'EOF'
+hostname; uptime
+systemctl is-active ssh
+free -h | grep Mem
+df -h / | tail -1
+ps aux --sort=-%mem | head -5
+EOF
+ssh lab 'bash -s' < rapor.sh > servis_raporu.txt
+cat servis_raporu.txt
+\end{kodblok}
+\texttt{bash -s} betiği standart girdiden okur; betik sunucuya kopyalanmadan orada çalışır, çıktısı yerel dosyaya yazılır.
+
+\subsection{Bozuk sistem görevi: anahtar doğru, giriş reddediliyor (yaklaşık 15 dakika)}
+Bir arkadaşınız ``kolaylık olsun'' diye şunu çalıştırmış:
+\begin{kodblok}
+$ chmod -R 777 ~/.ssh
+$ ssh lab
+ogrenci@localhost's password:
+$ journalctl -u ssh -n 5 --no-pager
+... Authentication refused: bad ownership or modes for directory /home/ogrenci/.ssh
+\end{kodblok}
+\textbf{Görev:} belirtiyi kaydedin; en az iki hipotez yazın; \texttt{ssh -v lab} ve sunucu günlüğüyle test edin; izinleri onarın; \texttt{KOK\_NEDEN\_RAPORU.md} şablonunu doldurun.
+
+\textbf{İpucu:} fazla izin de bir hatadır. \texttt{ls -ld \textasciitilde/.ssh} ve \texttt{ls -l \textasciitilde/.ssh} çıktısını yukarıdaki izin tablosuyla karşılaştırın.
+
+\subsection{Teslim listesi}
+\begin{itemize}
+  \item \texttt{servis\_raporu.txt}
+  \item \texttt{KOK\_NEDEN\_RAPORU.md} (SSH izinleri)
+  \item \texttt{/srv/veri} için \texttt{ls -ld} çıktısı
+  \item \texttt{AI\_USAGE.md} (üretken YZ kullandıysanız)
+\end{itemize}
+Son teslim: [tarih, saat] \quad Teslim yeri: [LMS / e-posta]
+
+%==============================================================
+\section{Kendinizi sınayın}
+\begin{enumerate}
+  \item Bir Python betiği neden doğrudan diske yazamaz da \texttt{open} ve \texttt{write} sistem çağrılarını kullanır?
+  \item \texttt{kill PID} ile \texttt{kill -9 PID} arasındaki fark nedir? Hangisi bir eğitim betiği için daha güvenlidir, neden?
+  \item 13 milyar parametreli bir model int8 biçiminde en az ne kadar bellek ister? 16 GB'lık bir GPU'ya sığar mı?
+  \item \texttt{chmod 640 notlar.txt} komutundan sonra \texttt{ls -l} çıktısının izin bölümü ne olur?
+  \item Bir dizinde \texttt{r} izni olup \texttt{x} izni yoksa hangi komutlar çalışır, hangileri çalışmaz?
+  \item \texttt{usermod -G ai-lab ali} komutu \texttt{-a} olmadan çalıştırılırsa ne olur?
+  \item SSH bağlantısı koptuğunda \texttt{nohup} ile tmux arasındaki fark nedir?
+  \item \texttt{sshd} neden \texttt{777} izinli bir \texttt{.ssh} dizinindeki anahtarı reddeder? Bu davranışın koruduğu saldırı senaryosunu tarif edin.
+\end{enumerate}
+
+\section*{Hafta 3 için hazırlık}
+SSH kurulumunu tamamlayın; GNU Awk kılavuzunun giriş bölümünü okuyun \cite{gawk}; MIT Missing Semester ``Shell Tools and Scripting'' dersini izleyin \cite{missing2}. Gelecek hafta: algoritma karmaşıklığı, Bash betikleme, \texttt{grep}, \texttt{sed}, \texttt{awk}, \texttt{jq} ve \texttt{cron}.
+
+%==============================================================
+\begin{thebibliography}{99}\small
+\bibitem{signal7} Linux man-pages, \emph{signal(7)}. \url{https://man7.org/linux/man-pages/man7/signal.7.html}
+\bibitem{kernelmm} The Linux Kernel documentation, ``Concepts overview'' (memory management). \url{https://docs.kernel.org/admin-guide/mm/concepts.html}
+\bibitem{zero} S. Rajbhandari, J. Rasley, O. Ruwase, Y. He, ``ZeRO: Memory optimizations toward training trillion parameter models,'' SC20 (2020). \url{https://arxiv.org/abs/1910.02054}
+\bibitem{systemd} freedesktop.org, \emph{systemd.service(5)}. \url{https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html}
+\bibitem{sshkeygen} OpenBSD manual pages, \emph{ssh-keygen(1)}. \url{https://man.openbsd.org/ssh-keygen}
+\bibitem{sshdconfig} OpenBSD manual pages, \emph{sshd\_config(5)}, StrictModes. \url{https://man.openbsd.org/sshd_config}
+\bibitem{gawk} Free Software Foundation, \emph{The GNU Awk User's Guide}. \url{https://www.gnu.org/software/gawk/manual/gawk.html}
+\bibitem{missing2} MIT, \emph{The Missing Semester}, ``Shell Tools and Scripting.'' \url{https://missing.csail.mit.edu/2020/shell-tools/}
+\bibitem{tmux} tmux wiki, ``Getting Started.'' \url{https://github.com/tmux/tmux/wiki/Getting-Started}
+\end{thebibliography}
+
+\end{document}

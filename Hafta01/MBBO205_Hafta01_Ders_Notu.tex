@@ -1,0 +1,541 @@
+% MBBO205 Bulut Bilişim ve Yapay Zekâ -- Hafta 1 Ders Notu
+% Derleme: xelatex MBBO205_Hafta01_Ders_Notu.tex (iki kez)
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setdefaultlanguage{turkish}
+\setmainfont{TeX Gyre Pagella}
+\setsansfont{TeX Gyre Heros}
+\setmonofont{DejaVu Sans Mono}[Scale=0.85]
+
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs,tabularx,array}
+\usepackage{enumitem}
+\usepackage{fvextra}
+\usepackage[most]{tcolorbox}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{lacivert}{HTML}{14213D}
+\definecolor{turuncu}{HTML}{A94E17}
+\definecolor{kum}{HTML}{EDEBE4}
+\definecolor{kod}{HTML}{1B2A4A}
+\definecolor{gri}{HTML}{4A5568}
+
+\titleformat{\section}{\sffamily\Large\bfseries\color{lacivert}}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\sffamily\large\bfseries\color{lacivert}}{\thesubsection}{0.6em}{}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\setlist{itemsep=0.2em,topsep=0.3em}
+\renewcommand{\arraystretch}{1.25}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\sffamily MBBO205 · Hafta 1}
+\fancyhead[R]{\small\sffamily Dr. Öğr. Üyesi Hasan Oğuz}
+\fancyfoot[C]{\small\sffamily\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\newtcolorbox{kutu}[1][]{colback=kum,colframe=kum,arc=2mm,boxrule=0pt,left=3mm,right=3mm,top=2mm,bottom=2mm,#1}
+\newtcolorbox{uyari}[1][]{colback=white,colframe=turuncu,arc=2mm,boxrule=0.8pt,left=3mm,right=3mm,top=2mm,bottom=2mm,title={#1},coltitle=white,colbacktitle=turuncu,fonttitle=\sffamily\bfseries}
+\DefineVerbatimEnvironment{kodblok}{Verbatim}{breaklines,fontsize=\small,frame=single,rulecolor=\color{gri},framesep=2mm}
+
+\begin{document}
+
+%-------------------------------------------------------------- Başlık
+\begin{tcolorbox}[colback=lacivert,colframe=lacivert,arc=2mm,left=5mm,right=5mm,top=4mm,bottom=4mm]
+\color{white}\sffamily
+{\small İSTANBUL OKAN ÜNİVERSİTESİ · MESLEK YÜKSEKOKULU · 2026–2027 GÜZ}\\[3mm]
+{\LARGE\bfseries MBBO205 Bulut Bilişim ve Yapay Zekâ}\\[1mm]
+{\large Hafta 1 Ders Notu: Derse giriş, yapay zekâya genel bakış ve Linux'a ilk adım}\\[3mm]
+{\small Dr. Öğr. Üyesi Hasan Oğuz}
+\end{tcolorbox}
+
+\begin{kutu}
+\textbf{Bu haftanın hedefleri.} Hafta sonunda öğrenci (i) yapay zekâ, makine öğrenmesi, derin öğrenme ve veri bilimi kavramlarını ayırt eder; (ii) alanın tarihsel gelişimini ve bugünkü sıçramanın nedenlerini açıklar; (iii) YZ sistemlerinin çalıştığı donanım ve bulut modellerini tanır; (iv) bir Ubuntu ortamında terminali açar, dizin yapısında gezinir, temel komutları kullanır ve ortam raporunu üretir. \\[1mm]
+\textbf{İlgili kazanımlar:} DÖK1, DÖK2 \quad \textbf{Süre:} 1 saat teori + 1 saat uygulama
+\end{kutu}
+
+\tableofcontents
+
+%==============================================================
+\section{Ders bilgileri}
+
+\subsection{İşleyiş}
+Ders haftada bir ders saati teori ve bir ders saati Linux uygulamasından oluşur. Her hafta aynı döngü izlenir:
+\begin{enumerate}
+  \item \textbf{Teori:} kavramlar ve gerekli matematik.
+  \item \textbf{Uygulama:} aynı konunun Linux terminalinde yapılması.
+  \item \textbf{Teslim:} hafta içinde, 5. haftadan itibaren otomatik denetimli.
+  \item \textbf{Bozuk sistem görevi:} kasten bozulmuş bir ortamı onarıp kök nedeni raporlama.
+  \item \textbf{İngilizce okuma:} ilgili resmî dokümantasyon veya \texttt{man} sayfası.
+\end{enumerate}
+
+\subsection{Değerlendirme}
+\begin{center}
+\begin{tabularx}{0.92\textwidth}{@{}l c Y@{}}
+\toprule
+\textbf{Bileşen} & \textbf{Ağırlık} & \textbf{Kapsam} \\
+\midrule
+Ara sınav & \%40 & Uygulamalı sınav (Bash, SQL, veri keşfi; hafta 1–7) ve hafta 1–7 lab teslimleri \\
+Final & \%60 & Kavramsal sorular ve bozuk sistem onarımı; dönem projesi ve hafta 8–14 lab teslimleri \\
+\bottomrule
+\end{tabularx}
+\end{center}
+Sınav notlarının iç dağılımı dönem başında Telegram grubunda duyurulur.
+
+\subsection{İletişim ve ders grubu}
+\begin{minipage}[c]{0.62\textwidth}
+Duyurular, haftalık lab dosyaları ve soru-cevap için ders Telegram grubuna katılın:\\[2mm]
+\texttt{[ders grubu bağlantısı]}\\[2mm]
+E-posta gönderirken konu satırına \texttt{[MBBO205]} yazın; ad, soyad ve öğrenci numaranızı ekleyin. Görüşme saatleri: [gün, saat].
+\end{minipage}\hfill
+\begin{minipage}[c]{0.32\textwidth}
+\end{minipage}
+
+\subsection{Ders kuralları}
+\begin{itemize}
+  \item \textbf{Akademik dürüstlük:} birlikte düşünün, ayrı teslim edin.
+  \item \textbf{Üretken YZ:} kullanımı serbesttir; kullanılan istemler ve doğrulama adımları \texttt{AI\_USAGE.md} dosyasında beyan edilir. Ara sınav ve final kapalı ağ ortamında yapılır.
+  \item \textbf{Terminal güvenliği:} \texttt{sudo} ve \texttt{rm -r} komutlarını, ne yaptığını okumadan çalıştırmayın.
+\end{itemize}
+
+%==============================================================
+\section{Yapay zekâ nedir?}
+
+\subsection{Tanımlar}
+\textbf{Yapay zekâ (YZ)}, normalde insan zekâsı gerektiren görevleri (algılama, dil, akıl yürütme, karar verme, deneyimden öğrenme) yerine getiren hesaplamalı sistemlerin bilimi ve mühendisliğidir. Mühendislik açısından en kullanışlı tanım \textbf{rasyonel ajan} tanımıdır: çevresini algılayan ve hedefine göre beklenen en iyi sonucu veren eylemi seçen sistem \cite{aima}. Bu tanım zekânın ``ne olduğunu'' değil, sistemin \emph{davranışını} ölçer.
+
+Bugünkü sistemler \textbf{dar YZ}'dir: belirli görevlerde (görüntü tanıma, çeviri, oyun) çok güçlüdürler. İnsan düzeyinde genel yeteneğe sahip \textbf{genel YZ (AGI)} ise tanımı ve ulaşılabilirliği hâlâ tartışmalı bir hedeftir.
+
+\subsection{Kavramlar arasındaki ilişki}
+Kavramlar iç içe kümeler oluşturur:
+\[
+\text{Üretken YZ} \subset \text{Derin öğrenme} \subset \text{Makine öğrenmesi} \subset \text{Yapay zekâ}.
+\]
+\begin{itemize}
+  \item \textbf{Yapay zekâ:} öğrenmeyen yöntemleri de kapsar; kural tabanlı uzman sistemler, arama (satranç motorları), planlama.
+  \item \textbf{Makine öğrenmesi (ML):} davranışını açıkça programlanmak yerine veriden öğrenen modeller.
+  \item \textbf{Derin öğrenme (DL):} çok katmanlı yapay sinir ağlarıyla yapılan makine öğrenmesi.
+  \item \textbf{Üretken YZ:} yeni metin, görüntü, ses veya kod üreten derin modeller (büyük dil modelleri, LLM).
+  \item \textbf{Veri bilimi:} bu kümelerin \emph{içinde değil}, onlarla \emph{kesişen} bir alandır; istatistik, programlama ve alan bilgisini birleştirerek veriden karar üretir.
+\end{itemize}
+
+\subsection{Programlama paradigması olarak makine öğrenmesi}
+Geleneksel programlamada insan kuralları yazar; program kurallarla veriyi işleyip cevap üretir. Makine öğrenmesinde ise veri ve doğru cevaplar verilir; öğrenme algoritması kuralları (modeli) çıkarır:
+\begin{align*}
+\text{Geleneksel:}&\quad \text{Kurallar} + \text{Veri} \;\longrightarrow\; \text{Cevaplar}\\
+\text{Makine öğrenmesi:}&\quad \text{Veri} + \text{Cevaplar} \;\longrightarrow\; \text{Kurallar (model)}
+\end{align*}
+Örnek: bir spam filtresi için binlerce kural yazmak yerine, ``spam'' ya da ``normal'' olarak etiketlenmiş binlerce e-posta verilir; model hangi sözcük örüntülerinin spam'e işaret ettiğini kendisi öğrenir.
+
+\subsection{Öğrenme türleri}
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l Y Y@{}}
+\toprule
+\textbf{Tür} & \textbf{Ne öğrenir?} & \textbf{Örnek} \\
+\midrule
+Denetimli & Etiketli veriden girdi $\to$ çıktı eşlemesi & Spam tespiti, ev fiyatı tahmini \\
+Denetimsiz & Etiketsiz veride yapı (kümeler, aykırılar) & Müşteri segmentasyonu, anomali tespiti \\
+Pekiştirmeli & Ödül ve cezayla deneme-yanılma politikası & AlphaGo, robot kontrolü \\
+Öz-denetimli & Etiketi verinin kendisinden üretir & LLM'lerin sonraki sözcüğü tahmin etmesi \\
+\bottomrule
+\end{tabularx}
+\end{center}
+Dönem boyunca ağırlıklı olarak denetimli öğrenmeyle çalışılacaktır (hafta 9–11).
+
+%==============================================================
+\section{Tarihçe}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l Y@{}}
+\toprule
+\textbf{Yıl} & \textbf{Olay ve önemi} \\
+\midrule
+1943 & McCulloch ve Pitts, yapay nöronun ilk matematiksel modelini önerir \cite{mcculloch}. \\
+1950 & Turing, ``Makineler düşünebilir mi?'' sorusunu taklit oyunuyla ele alır \cite{turing}. \\
+1956 & Dartmouth çalıştayı; ``yapay zekâ'' terimi alanın adı olur \cite{dartmouth}. \\
+1958 & Rosenblatt'ın algılayıcısı (perceptron): veriden öğrenen ilk yapay nöron \cite{rosenblatt}. \\
+1966 & ELIZA: ilk sohbet programlarından biri. \\
+1969 & Minsky ve Papert, tek katmanlı ağların sınırlarını gösterir (ör. XOR). \\
+1974–1980 & Birinci ``YZ kışı'': beklentiler karşılanamaz, fonlar kesilir. \\
+1980'ler & Uzman sistemler: elle yazılmış kural tabanları ticari olarak yaygınlaşır. \\
+1986 & Geri yayılım (backpropagation) çok katmanlı ağları eğitilebilir kılar \cite{rumelhart}. \\
+1987–1993 & İkinci YZ kışı: uzman sistem pazarı çöker. \\
+1997 & Deep Blue, dünya satranç şampiyonu Kasparov'u yener. \\
+2006 & Hinton ve ekibi derin ağları katman katman ön eğitimle eğitir. \\
+2009 & ImageNet: milyonlarca etiketli görüntüden oluşan veri seti. \\
+2012 & AlexNet, GPU ile eğitilen bir CNN ile ImageNet'te hatayı büyük ölçüde düşürür \cite{alexnet}. \\
+2016 & AlphaGo, Lee Sedol'u Go'da 4–1 yener \cite{alphago}. \\
+2017 & ``Attention Is All You Need'': Transformer mimarisi \cite{transformer}. \\
+2020 & GPT-3 (175 milyar parametre) \cite{gpt3}; AlphaFold 2 protein yapısı tahmininde çığır açar \cite{alphafold}. \\
+2022 & ChatGPT ile üretken YZ geniş kitlelere ulaşır. \\
+2024 & Fizik Nobeli Hopfield ve Hinton'a, Kimya Nobeli Hassabis, Jumper ve Baker'a \cite{nobel}; AB YZ Yasası yürürlüğe girer \cite{aiact}. \\
+2025+ & YZ ajanları, açık ağırlıklı ve yerel çalışan modeller. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Algılayıcı: ilk öğrenen nöron}
+Rosenblatt'ın algılayıcısı, girdilerin ağırlıklı toplamını bir eşikle karşılaştırır:
+\begin{equation}
+y = \begin{cases} 1, & \mathbf{w}^{\top}\mathbf{x} + b > 0,\\ 0, & \text{aksi halde,}\end{cases}
+\qquad \mathbf{w}^{\top}\mathbf{x} = \sum_{j=1}^{n} w_j x_j .
+\label{eq:perceptron}
+\end{equation}
+
+\begin{kutu}
+\textbf{Çözümlü örnek: VE kapısı.} $n=2$, $\mathbf{w}=(1,1)$ ve $b=-1.5$ seçelim. Dört girdi için:
+\begin{center}
+\begin{tabular}{cc|c|c}
+$x_1$ & $x_2$ & $w_1x_1+w_2x_2+b$ & $y$ \\ \hline
+0 & 0 & $-1.5$ & 0 \\
+0 & 1 & $-0.5$ & 0 \\
+1 & 0 & $-0.5$ & 0 \\
+1 & 1 & $\phantom{-}0.5$ & 1
+\end{tabular}
+\end{center}
+Algılayıcı mantıksal VE işlevini gerçekler. XOR için ise $(0,1)$ ve $(1,0)$ noktalarını $(0,0)$ ve $(1,1)$ noktalarından ayıran tek bir doğru yoktur; bu nedenle tek bir algılayıcı XOR'u öğrenemez. Minsky ve Papert'in 1969 eleştirisinin özü budur. Çok katmanlı ağlar bu sınırı aşar.
+\end{kutu}
+
+\subsection{Neden şimdi?}
+Algoritmaların önemli bölümü onlarca yıllıktır. 2012 sonrasındaki sıçramayı üç etkenin aynı anda olgunlaşması açıklar:
+\begin{enumerate}
+  \item \textbf{Veri:} internet, akıllı telefonlar ve sensörler; ImageNet gibi büyük etiketli veri setleri.
+  \item \textbf{Hesaplama:} GPU'lar, sinir ağlarının temel işlemi olan matris çarpımını binlerce çekirdekte paralel yapar ve bulutta saatlik kiralanabilir.
+  \item \textbf{Algoritma ve açık kaynak:} geri yayılım, ReLU, dropout, Transformer; PyTorch ve Hugging Face gibi araçların herkese açık olması.
+\end{enumerate}
+YZ kışlarının ortak nedeni tersidir: vaatler, o dönemin veri ve hesaplama olanaklarının önüne geçmiştir.
+
+%==============================================================
+\section{Alt disiplinler ve yaşam döngüsü}
+
+\subsection{Alt disiplinler}
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l Y@{}}
+\toprule
+\textbf{Alan} & \textbf{Tipik görevler} \\
+\midrule
+Görüntü işleme (CV) & Sınıflandırma, nesne tespiti, bölütleme, tıbbi görüntü analizi \\
+Doğal dil işleme (NLP) & Çeviri, duygu analizi, özetleme, soru-cevap, büyük dil modelleri \\
+Konuşma & Konuşmadan metne (ASR), metinden konuşmaya (TTS) \\
+Robotik & Algı (CV) + planlama + kontrol; otonom araçlar, endüstriyel robotlar \\
+Öneri sistemleri & E-ticaret, video ve müzik platformlarında kişiselleştirme \\
+\bottomrule
+\end{tabularx}
+\end{center}
+Bu alanlar giderek ortak bir çekirdeği paylaşır: aynı derin öğrenme araçları ve çoğu zaman aynı Transformer mimarisi. \textbf{Çok kipli (multimodal)} modeller görüntü, metin ve sesi tek modelde işleyerek alanlar arasındaki sınırı belirsizleştirir. Robotik ise tanımı gereği çok disiplinlidir: bir robot kamerasıyla görür (CV), sözlü komutu anlar (NLP/konuşma) ve hareketini planlar (kontrol).
+
+\subsection{Bir YZ projesinin yaşam döngüsü}
+Aşağıdaki döngü dersin haritasıdır; parantez içindeki sayılar ilgili haftalardır.
+\begin{enumerate}
+  \item Problem tanımı (1)
+  \item Veri toplama (3, 7)
+  \item Temizleme ve ETL (7–8)
+  \item Keşifsel veri analizi (6)
+  \item Modelleme (9–12)
+  \item Değerlendirme (10)
+  \item Dağıtım (14)
+  \item İzleme; yeni veri ve yeni sorunlarla başa dönüş (14)
+\end{enumerate}
+Bu bir çizgi değil döngüdür. Sektörde zamanın büyük bölümü 2. ve 3. adımlara harcanır.
+
+%==============================================================
+\section{Matematiksel öz}
+
+Denetimli bir model, parametreleri $\theta$ olan bir fonksiyondur:
+\begin{equation}
+\hat{y} = f(\mathbf{x};\,\theta).
+\end{equation}
+Burada $\mathbf{x}\in\mathbb{R}^{n}$ girdi özellikleri, $y$ gerçek cevap, $\hat{y}$ modelin tahminidir. \textbf{Öğrenme}, $N$ örnekten oluşan eğitim verisi $\{(\mathbf{x}_i,y_i)\}_{i=1}^{N}$ üzerinde ortalama kaybı en aza indiren parametreleri bulmaktır:
+\begin{equation}
+\theta^{*} = \arg\min_{\theta}\; \frac{1}{N}\sum_{i=1}^{N} \mathcal{L}\big(f(\mathbf{x}_i;\theta),\, y_i\big).
+\label{eq:erm}
+\end{equation}
+Kayıp fonksiyonu $\mathcal{L}$, tahminin ne kadar yanlış olduğunu ölçer. Örneğin sayısal tahmin (regresyon) için ortalama kare hata:
+\begin{equation}
+\mathrm{MSE}(\theta) = \frac{1}{N}\sum_{i=1}^{N}\big(y_i - \hat{y}_i\big)^{2}.
+\end{equation}
+
+\begin{kutu}
+\textbf{Çözümlü örnek.} Üç evin gerçek fiyatları $y=(2,\,3,\,5)$ (milyon TL), bir modelin tahminleri $\hat{y}=(2.5,\,3,\,4)$ olsun. Hatalar $(-0.5,\,0,\,1)$, kareleri $(0.25,\,0,\,1)$ olur ve
+\[
+\mathrm{MSE} = \tfrac{1}{3}(0.25+0+1) \approx 0.417 .
+\]
+Eğitim, bu değeri küçültecek biçimde $\theta$'yı değiştirmektir.
+\end{kutu}
+
+Denklem~\eqref{eq:erm} dönemin matematiksel iskeletidir: lineer cebir $f$'nin nasıl hesaplandığını (hafta 5), olasılık ve istatistik verinin ve kaybın doğasını (hafta 6), optimizasyon ise $\arg\min$'in nasıl bulunduğunu (hafta 10–11) açıklar.
+
+%==============================================================
+\section{Altyapı: donanım ve bulut}
+
+\subsection{Hangi iş hangi donanımda?}
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l Y Y@{}}
+\toprule
+\textbf{Birim} & \textbf{Güçlü olduğu} & \textbf{YZ'deki rolü} \\
+\midrule
+CPU & Az sayıda güçlü, genel amaçlı çekirdek & Veri hazırlama, küçük modeller, servis \\
+GPU & Binlerce basit çekirdek; paralel matris çarpımı & Derin öğrenme eğitimi ve çıkarımı \\
+TPU / NPU & Matris işlemine özel yonga (ASIC) & Büyük ölçekli eğitim; telefonda çıkarım \\
+Uç cihaz & Düşük güç, yerel çalışma & Kamera, IoT, gizlilik gerektiren çıkarım \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\textbf{Eğitim} pahalıdır ve seyrek yapılır; \textbf{çıkarım} (eğitilmiş modelin kullanılması) ucuzdur ama milyonlarca kez tekrarlanır. Donanım seçimi bu ayrıma göre yapılır.
+
+\subsection{Bulut hizmet modelleri}
+\begin{itemize}
+  \item \textbf{IaaS (altyapı):} sanal makine, disk, ağ kiralanır; işletim sistemi ve üstü kullanıcıdadır. Bu derste hafta 4 ve 14'te kullanılacak.
+  \item \textbf{PaaS (platform):} yönetilen veritabanı, model eğitim servisleri; kod ve veri kullanıcıda, sunucu sağlayıcıdadır.
+  \item \textbf{SaaS (yazılım):} sohbet asistanları, e-posta, ofis uygulamaları; yalnızca kullanılır.
+\end{itemize}
+Bulut sunucularının büyük çoğunluğu Linux çalıştırır ve TOP500 listesindeki süper bilgisayarların tamamı Kasım 2017'den beri Linux kullanır \cite{top500}. IaaS seçen biri fiilen bir Linux sistem yöneticisidir; dersin Linux ağırlığının gerekçesi budur.
+
+%==============================================================
+\section{Güncel eğilimler ve riskler}
+
+\subsection{Eğilimler}
+\begin{enumerate}
+  \item \textbf{Üretken ve çok kipli YZ:} metin, görüntü, ses ve kod üretimi.
+  \item \textbf{YZ ajanları:} araç kullanan, web'de gezinen ve terminalde komut çalıştıran modeller.
+  \item \textbf{Küçük ve yerel modeller:} açık ağırlıklı modeller dizüstü bilgisayarda çalıştırılabilir (hafta 13).
+  \item \textbf{Uç YZ:} telefon ve kameralarda NPU ile yerel çıkarım.
+  \item \textbf{Düzenleme:} AB YZ Yasası (Tüzük 2024/1689), KVKK, GDPR.
+\end{enumerate}
+
+\begin{uyari}{Öngörü (spekülatif)}
+Ajanlar kod yazmayı kolaylaştırdıkça, bir sistemi kurma, denetleme ve sorun giderme becerisinin göreli değeri artabilir. Bu bir tahmindir; dersteki ``bozuk sistem'' görevleri bu varsayıma dayanır.
+\end{uyari}
+
+\subsection{Riskler}
+\begin{itemize}
+  \item \textbf{Önyargı (bias):} model, verideki dengesizliği öğrenir ve büyütebilir (hafta 10).
+  \item \textbf{Gizlilik:} kişisel veriler KVKK ve GDPR kapsamındadır; anonimleştirme gerekir (hafta 7).
+  \item \textbf{Halüsinasyon:} dil modelleri akıcı ama yanlış cevaplar üretebilir; çıktı doğrulanmalıdır (hafta 13).
+  \item \textbf{Güvenlik:} istem enjeksiyonu, açık bırakılan portlar, kod deposuna sızan API anahtarları (hafta 4, 13).
+\end{itemize}
+
+%==============================================================
+\section{Uygulama: Linux terminaline ilk adım}
+
+\subsection{Kurulum seçenekleri}
+Ders boyunca \textbf{Ubuntu 24.04 LTS} kullanılır. Önerilen en düşük donanım 8 GB RAM ve 40 GB boş disktir; GPU gerekmez.
+\begin{itemize}
+  \item \textbf{WSL2 (Windows):} Windows içinde gerçek bir Linux çekirdeği çalıştırır; en hızlı başlangıçtır \cite{wsl}.
+  \item \textbf{VirtualBox:} macOS veya WSL'nin açılamadığı bilgisayarlar için sanal makine.
+  \item \textbf{Lab bilgisayarı:} okulda hazır ortam. \textbf{Bulut VM:} hafta 4'ten itibaren.
+\end{itemize}
+
+\begin{kodblok}
+# PowerShell (yönetici olarak), ardından bilgisayarı yeniden başlatın
+wsl --install -d Ubuntu-24.04
+
+# Ubuntu terminalinde: sürümü doğrulayın ve sistemi güncelleyin
+lsb_release -a
+sudo apt update && sudo apt upgrade -y
+
+# WSL'de Windows dosyalarınız burada görünür:
+ls /mnt/c/Users/
+\end{kodblok}
+Parola yazarken ekranda karakter görünmemesi normaldir.
+
+\subsection{Bir komut satırının anatomisi}
+\begin{kodblok}
+ogrenci@okan-lab:~$ ls -la /etc
+\end{kodblok}
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l Y@{}}
+\toprule
+\textbf{Parça} & \textbf{Anlamı} \\
+\midrule
+\texttt{ogrenci@okan-lab} & Kullanıcı adı @ makine adı \\
+\texttt{\textasciitilde} & Bulunulan dizin; \texttt{\textasciitilde} ev dizinidir (\texttt{/home/ogrenci}) \\
+\texttt{\$} & Normal kullanıcı; \texttt{\#} görülürse root (tam yetki) olarak çalışılıyordur \\
+\texttt{ls} & Komut \\
+\texttt{-la} & Seçenekler: \texttt{l} ayrıntılı liste, \texttt{a} gizli dosyalar dahil \\
+\texttt{/etc} & Argüman: komutun üzerinde çalıştığı hedef \\
+\bottomrule
+\end{tabularx}
+\end{center}
+Linux büyük-küçük harfe duyarlıdır: \texttt{Veri.csv} ile \texttt{veri.csv} farklı dosyalardır. Boşluk içeren adlar tırnak içine alınmalıdır.
+
+\subsection{Dizin yapısı (FHS)}
+Windows'taki \texttt{C:}, \texttt{D:} sürücüleri yerine Linux'ta her şey tek bir kökten, \texttt{/} dizininden dallanır \cite{fhs}.
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l Y Y@{}}
+\toprule
+\textbf{Dizin} & \textbf{İçerik} & \textbf{YZ bağlamında örnek} \\
+\midrule
+\texttt{/home} & Kullanıcı dosyaları & Projeler, veri setleri \\
+\texttt{/etc} & Sistem yapılandırması & \texttt{/etc/os-release}, SSH ayarları \\
+\texttt{/usr} & Programlar ve kütüphaneler & \texttt{/usr/bin/python3} \\
+\texttt{/var} & Değişken veri, günlükler & \texttt{/var/log}, veritabanı dosyaları \\
+\texttt{/opt} & Üçüncü taraf yazılımlar & Bazı ticari araç kurulumları \\
+\texttt{/tmp} & Geçici dosyalar & İndirmeler, ara çıktılar \\
+\texttt{/proc} & Çekirdeğin sanal dosyaları & \texttt{/proc/cpuinfo}, \texttt{/proc/meminfo} \\
+\texttt{/dev} & Aygıt dosyaları & Diskler, GPU aygıtları \\
+\bottomrule
+\end{tabularx}
+\end{center}
+``Linux'ta her şey bir dosyadır'' ilkesi gereği işlemci bilgisi bile \texttt{cat /proc/cpuinfo} ile okunabilir.
+
+\subsection{Komut başvuru tablosu}
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l Y l@{}}
+\toprule
+\textbf{Komut} & \textbf{Ne yapar} & \textbf{Örnek} \\
+\midrule
+\texttt{pwd} & Bulunulan dizini yazar & \texttt{pwd} \\
+\texttt{ls} & Dizin içeriğini listeler & \texttt{ls -la \textasciitilde} \\
+\texttt{cd} & Dizin değiştirir & \texttt{cd ..}, \texttt{cd -} \\
+\texttt{mkdir} & Dizin oluşturur & \texttt{mkdir -p a/b/c} \\
+\texttt{touch} & Boş dosya oluşturur & \texttt{touch notlar.txt} \\
+\texttt{cp} & Kopyalar & \texttt{cp -r veri/ yedek/} \\
+\texttt{mv} & Taşır, yeniden adlandırır & \texttt{mv eski.txt yeni.txt} \\
+\texttt{rm} & Siler (geri dönüşüm kutusu yok) & \texttt{rm -r dizin/} \\
+\texttt{cat}, \texttt{less} & Dosyayı yazar, sayfa sayfa okur & \texttt{less env\_report.sh} \\
+\texttt{head}, \texttt{tail} & İlk / son satırlar & \texttt{tail -n 5 log.txt} \\
+\texttt{wc -l} & Satır sayar & \texttt{wc -l veri.csv} \\
+\texttt{echo} & Metni yazar & \texttt{echo \$PATH} \\
+\texttt{>}, \texttt{>>} & Çıktıyı dosyaya yazar / ekler & \texttt{echo a >> b.txt} \\
+\texttt{|} & Çıktıyı sonraki komuta verir & \texttt{ls -S /etc | head} \\
+\texttt{man}, \texttt{-{}-help} & Kılavuz, kısa yardım & \texttt{man ls} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\textbf{Kısayollar:} \texttt{Tab} tamamlama; \texttt{↑} ve \texttt{Ctrl+R} komut geçmişi; \texttt{Ctrl+C} çalışan komutu durdurur (kopyalamaz; terminalde kopyala-yapıştır \texttt{Ctrl+Shift+C/V}); \texttt{Ctrl+L} ekranı temizler.
+
+\subsection{Sistem bilgisi komutları}
+\begin{kodblok}
+whoami               # hangi kullanıcıyım?
+uname -r             # çekirdek sürümü
+cat /etc/os-release  # dağıtım ve sürüm
+lscpu | head -n 15   # işlemci modeli, çekirdekler
+nproc                # kullanılabilir çekirdek sayısı
+free -h              # bellek (RAM)
+df -h /              # kök dizindeki disk alanı
+nvidia-smi           # NVIDIA GPU varsa model ve bellek
+\end{kodblok}
+Çekirdek sayısı paralel veri işlemeyi, RAM belleğe sığacak veri seti ve model boyutunu, disk ise veri setleri ve model dosyalarını sınırlar. \texttt{nvidia-smi} ``command not found'' veriyorsa makinede NVIDIA sürücüsü veya GPU yoktur; bu bir hata değil, bir bilgidir.
+
+%==============================================================
+\section{Laboratuvar görevi}
+
+\subsection{Ana görev: ortam raporu (yaklaşık 25 dakika)}
+\begin{enumerate}
+  \item Ders dizinini oluşturun ve içine girin.
+  \item \texttt{env\_report.sh} dosyasını Telegram grubundan indirip bu dizine kopyalayın.
+  \item Çalıştırma izni verin, çalıştırın ve çıktıyı inceleyin.
+  \item Betiği açın; her satırın ne yaptığını kendi cümlelerinizle not edin.
+\end{enumerate}
+\begin{kodblok}
+mkdir -p ~/mbbo205/hafta01
+cd ~/mbbo205/hafta01
+cp /mnt/c/Users/ADINIZ/Downloads/env_report.sh .   # WSL kullanıyorsanız
+chmod +x env_report.sh
+./env_report.sh env_report.txt
+less env_report.sh
+\end{kodblok}
+
+Betiğin içeriği:
+\begin{kodblok}
+#!/usr/bin/env bash
+# Hafta 1: ortam raporu -> env_report.txt
+set -euo pipefail
+out="${1:-env_report.txt}"
+{
+  echo "Tarih   : $(date -Iseconds)"
+  echo "Kullanıcı: $(whoami)"
+  echo "Kernel  : $(uname -r)"
+  echo "Dağıtım : $(. /etc/os-release && echo "$PRETTY_NAME")"
+  echo "CPU     : $(lscpu | awk -F: '/Model name/ {gsub(/^ +/,"",$2); print $2; exit}')"
+  echo "Çekirdek: $(nproc)"
+  echo "Bellek  : $(free -h | awk '/^Mem:/ {print $2}')"
+  echo "Disk /  : $(df -h / | awk 'NR==2 {print $4 " boş / " $2}')"
+  if command -v nvidia-smi >/dev/null; then
+    echo "GPU     : $(nvidia-smi --query-gpu=name,memory.total --format=csv,noheader)"
+  else
+    echo "GPU     : yok"
+  fi
+  echo "Python  : $(python3 --version 2>&1 || echo yok)"
+} | tee "$out"
+\end{kodblok}
+
+\begin{uyari}{Sık karşılaşılan hata: \texttt{bad interpreter}}
+Betik Windows'ta bir metin düzenleyiciyle açılıp kaydedildiyse satır sonları CRLF olur ve Bash betiği çalıştıramaz. Düzeltme: \texttt{sed -i 's/\textbackslash r\$//' env\_report.sh}. Bu durum 3. haftanın bozuk sistem görevinde ayrıntılı ele alınacaktır.
+\end{uyari}
+
+\subsection{Bozuk sistem görevi: kayıp PATH (yaklaşık 15 dakika)}
+Bir arkadaşınız terminalde şunu yazmış ve artık hiçbir komut çalışmıyor:
+\begin{kodblok}
+$ export PATH=/opt/yok
+$ ls
+ls: command not found
+$ python3
+python3: command not found
+\end{kodblok}
+\textbf{Görev:} sorunu aşağıdaki sırayla çözün ve \texttt{KOK\_NEDEN\_RAPORU.md} şablonunu doldurun.
+\begin{enumerate}
+  \item \textbf{Belirti:} hata mesajını aynen kaydedin.
+  \item \textbf{Hipotezler:} en az iki olası neden yazın (ör. komut silinmiş olabilir; kabuk komutu yanlış yerde arıyor olabilir).
+  \item \textbf{Testler:} \texttt{echo \$PATH} ve \texttt{/usr/bin/ls} komutlarını deneyin. Tam yolla çalışan komut ne anlatıyor?
+  \item \textbf{Düzeltme:} PATH'i onarın.
+  \item \textbf{Kök neden ve önleme:} 3--5 cümle.
+\end{enumerate}
+\textbf{İleri soru:} Aynı \texttt{export} satırı \texttt{\textasciitilde/.bashrc} dosyasının sonuna yazılmış olsaydı, yeni bir terminal açmak sorunu çözer miydi? Nasıl düzeltirdiniz?
+
+\subsection{Teslim listesi}
+\begin{itemize}
+  \item \texttt{env\_report.txt}
+  \item \texttt{KOK\_NEDEN\_RAPORU.md} (bozuk PATH görevi)
+  \item \texttt{env\_report.sh} için satır satır açıklamalar
+  \item \texttt{AI\_USAGE.md} (üretken YZ kullandıysanız)
+\end{itemize}
+Son teslim: [tarih, saat] \quad Teslim yeri: [LMS / e-posta]
+
+%==============================================================
+\section{Kendinizi sınayın}
+\begin{enumerate}
+  \item Bir satranç motoru ile bir spam filtresi arasındaki fark, ``YZ'' ve ``ML'' kavramları açısından nedir?
+  \item Veri bilimi neden YZ kümesinin içinde değil de onunla kesişen bir alan olarak tanımlanır?
+  \item Denklem~\eqref{eq:perceptron}'deki algılayıcı için VEYA kapısını gerçekleyen bir $(\mathbf{w},b)$ bulun.
+  \item AlexNet'in 2012'deki başarısında GPU'nun rolü nedir? Aynı ağ 1990'da neden eğitilemezdi?
+  \item $y=(1,\,4)$ ve $\hat{y}=(2,\,2)$ için MSE değerini hesaplayın.
+  \item Bir üniversite, öğrenci sohbet asistanını IaaS, PaaS ve SaaS olarak nasıl kurabilir? Her birinde kim neyi yönetir?
+  \item \texttt{echo "a" > x.txt} komutu iki kez çalıştırılırsa \texttt{x.txt} kaç satır içerir? \texttt{>>} ile kaç satır?
+  \item \texttt{/usr/bin/ls} çalışıyor ama \texttt{ls} çalışmıyorsa sorun nerededir?
+\end{enumerate}
+
+\section*{Hafta 2 için hazırlık}
+Ubuntu kurulumunu tamamlayın; \texttt{man hier} sayfasını okuyun; MIT ``The Missing Semester'' dersinin ``The Shell'' bölümünü izleyin \cite{missing}. Gelecek hafta: kullanıcılar, izinler, \texttt{apt}, \texttt{systemd} ve SSH.
+
+%==============================================================
+\begin{thebibliography}{99}\small
+\bibitem{aima} S. Russell, P. Norvig, \emph{Artificial Intelligence: A Modern Approach}, 4. baskı, Pearson, 2020. \url{https://aima.cs.berkeley.edu/}
+\bibitem{mcculloch} W. S. McCulloch, W. Pitts, ``A logical calculus of the ideas immanent in nervous activity,'' \emph{Bull. Math. Biophys.} 5, 115–133 (1943). \url{https://doi.org/10.1007/BF02478259}
+\bibitem{turing} A. M. Turing, ``Computing machinery and intelligence,'' \emph{Mind} 59, 433–460 (1950). \url{https://doi.org/10.1093/mind/LIX.236.433}
+\bibitem{dartmouth} J. McCarthy ve ark., ``A Proposal for the Dartmouth Summer Research Project on Artificial Intelligence'' (1955). \url{http://jmc.stanford.edu/articles/dartmouth/dartmouth.pdf}
+\bibitem{rosenblatt} F. Rosenblatt, ``The perceptron: a probabilistic model for information storage and organization in the brain,'' \emph{Psychol. Rev.} 65, 386–408 (1958). \url{https://doi.org/10.1037/h0042519}
+\bibitem{rumelhart} D. E. Rumelhart, G. E. Hinton, R. J. Williams, ``Learning representations by back-propagating errors,'' \emph{Nature} 323, 533–536 (1986). \url{https://doi.org/10.1038/323533a0}
+\bibitem{alexnet} A. Krizhevsky, I. Sutskever, G. E. Hinton, ``ImageNet classification with deep convolutional neural networks,'' NeurIPS 2012. \url{https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks}
+\bibitem{alphago} D. Silver ve ark., ``Mastering the game of Go with deep neural networks and tree search,'' \emph{Nature} 529, 484–489 (2016). \url{https://doi.org/10.1038/nature16961}
+\bibitem{transformer} A. Vaswani ve ark., ``Attention is all you need,'' NeurIPS 2017. \url{https://arxiv.org/abs/1706.03762}
+\bibitem{gpt3} T. Brown ve ark., ``Language models are few-shot learners,'' NeurIPS 2020. \url{https://arxiv.org/abs/2005.14165}
+\bibitem{alphafold} J. Jumper ve ark., ``Highly accurate protein structure prediction with AlphaFold,'' \emph{Nature} 596, 583–589 (2021). \url{https://doi.org/10.1038/s41586-021-03819-2}
+\bibitem{nobel} Nobel Prize in Physics 2024. \url{https://www.nobelprize.org/prizes/physics/2024/summary/}
+\bibitem{aiact} Regulation (EU) 2024/1689 (Artificial Intelligence Act). \url{https://eur-lex.europa.eu/eli/reg/2024/1689/oj}
+\bibitem{top500} TOP500, Operating System istatistikleri. \url{https://www.top500.org/statistics/list/}
+\bibitem{wsl} Microsoft, ``Install Linux on Windows with WSL.'' \url{https://learn.microsoft.com/en-us/windows/wsl/install}
+\bibitem{fhs} Linux Foundation, \emph{Filesystem Hierarchy Standard 3.0}. \url{https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html}
+\bibitem{missing} MIT, \emph{The Missing Semester of Your CS Education}, ``Course overview + the shell.'' \url{https://missing.csail.mit.edu/2020/course-shell/}
+\end{thebibliography}
+
+\end{document}
