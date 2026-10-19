@@ -1,0 +1,359 @@
+% MBBO205 Bulut Bilişim ve Yapay Zekâ -- Hafta 3 Ders Notu
+% Derleme: xelatex MBBO205_Hafta01_Ders_Notu.tex (iki kez)
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setdefaultlanguage{turkish}
+\setmainfont{TeX Gyre Pagella}
+\setsansfont{TeX Gyre Heros}
+\setmonofont{DejaVu Sans Mono}[Scale=0.85]
+
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs,tabularx,array}
+\usepackage{enumitem}
+\usepackage{fvextra}
+\usepackage[most]{tcolorbox}
+\usepackage{titlesec}
+\usepackage{needspace}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{lacivert}{HTML}{14213D}
+\definecolor{turuncu}{HTML}{A94E17}
+\definecolor{kum}{HTML}{EDEBE4}
+\definecolor{kod}{HTML}{1B2A4A}
+\definecolor{gri}{HTML}{4A5568}
+
+\titleformat{\section}{\needspace{8\baselineskip}\sffamily\Large\bfseries\color{lacivert}}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\needspace{5\baselineskip}\sffamily\large\bfseries\color{lacivert}}{\thesubsection}{0.6em}{}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\setlist{itemsep=0.2em,topsep=0.3em}
+\renewcommand{\arraystretch}{1.25}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\sffamily MBBO205 · Hafta 3}
+\fancyhead[R]{\small\sffamily Dr. Öğr. Üyesi Hasan Oğuz}
+\fancyfoot[C]{\small\sffamily\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\newtcolorbox{kutu}[1][]{colback=kum,colframe=kum,arc=2mm,boxrule=0pt,left=3mm,right=3mm,top=2mm,bottom=2mm,#1}
+\newtcolorbox{uyari}[1][]{colback=white,colframe=turuncu,arc=2mm,boxrule=0.8pt,left=3mm,right=3mm,top=2mm,bottom=2mm,title={#1},coltitle=white,colbacktitle=turuncu,fonttitle=\sffamily\bfseries}
+\DefineVerbatimEnvironment{kodblok}{Verbatim}{breaklines,fontsize=\small,frame=single,rulecolor=\color{gri},framesep=2mm}
+
+\begin{document}
+
+\begin{tcolorbox}[colback=lacivert,colframe=lacivert,arc=2mm,left=5mm,right=5mm,top=4mm,bottom=4mm]
+\color{white}\sffamily
+{\small İSTANBUL OKAN ÜNİVERSİTESİ · MESLEK YÜKSEKOKULU · 2026–2027 GÜZ}\\[3mm]
+{\LARGE\bfseries MBBO205 Bulut Bilişim ve Yapay Zekâ}\\[1mm]
+{\large Hafta 3 Ders Notu: Bash betikleme ve komut satırında veri}\\[1mm]
+{\small Veri yapıları, algoritma karmaşıklığı, boru hatları, grep, sed, awk, jq ve cron}\\[3mm]
+{\small Dr. Öğr. Üyesi Hasan Oğuz}
+\end{tcolorbox}
+
+\begin{kutu}
+\textbf{Bu haftanın hedefleri.} Hafta sonunda öğrenci (i) temel veri yapılarını ve erişim maliyetlerini tanır; (ii) O-notasyonuyla algoritma büyüme hızlarını karşılaştırır; (iii) standart akışları, yönlendirmeyi ve boru hattını kullanır; (iv) grep, sed, awk ve jq ile gerçek bir web sunucusu günlüğünü ve CSV/JSON verisini çözümler; (v) güvenli bir Bash betiği yazar ve cron ile zamanlar. \\[1mm]
+\textbf{İlgili kazanımlar:} DÖK2, DÖK3 \quad \textbf{Süre:} 1 saat teori + 1 saat uygulama
+\end{kutu}
+
+\tableofcontents
+
+%==============================================================
+\section{Veri yapıları}
+Veriyi nasıl tuttuğunuz, ona ne kadar hızlı erişebileceğinizi belirler.
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l Y Y@{}}
+\toprule
+\textbf{Yapı} & \textbf{Özellik} & \textbf{YZ ve veri işlemede örnek} \\
+\midrule
+Dizi (array) & Bitişik bellek; indeksle $O(1)$ erişim & NumPy dizileri, tensörler \\
+Bağlı liste & Ekleme ucuz, arama $O(n)$ & Kuyruk ve yığınların temeli \\
+Hash tablosu & Anahtar $\to$ değer; ortalama $O(1)$ & Python \texttt{dict}, awk dizileri, sözcük sayımı \\
+Ağaç & Hiyerarşi; dengeli ağaçta arama $O(\log n)$ & Dizin yapısı, veritabanı indeksi, karar ağacı \\
+Graf & Düğümler ve kenarlar & Sosyal ağ, yol bulma, sinir ağı hesap grafı \\
+Yığın / kuyruk & LIFO / FIFO & Geri alma işlemi, iş kuyruğu \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+%==============================================================
+\section{Algoritma karmaşıklığı}
+
+\subsection{O-notasyonu}
+Bir algoritmanın çalışma süresi $T(n)$, girdi boyutu $n$'nin fonksiyonudur. Bizi sabitler değil, $n$ büyüdüğünde sürenin nasıl büyüdüğü ilgilendirir:
+\begin{equation}
+T(n) = O\big(f(n)\big) \iff \exists\, c>0,\ n_0 :\ T(n) \le c\, f(n)\quad \forall n \ge n_0 .
+\end{equation}
+Örneğin $T(n) = 3n^{2} + 5n + 7$ için yeterince büyük $n$'de $n^{2}$ terimi baskındır: $T(n) = O(n^{2})$.
+
+\subsection{Beş karmaşıklık sınıfı}
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l Y r@{}}
+\toprule
+\textbf{Sınıf} & \textbf{Örnek} & \textbf{$n=10^{6}$ için adım} \\
+\midrule
+$O(1)$ & Hash tablosunda anahtar arama & $1$ \\
+$O(\log n)$ & Sıralı dizide ikili arama & $\approx 20$ \\
+$O(n)$ & Dosyayı bir kez okumak (\texttt{awk}, \texttt{wc}) & $10^{6}$ \\
+$O(n \log n)$ & Sıralama (\texttt{sort}) & $\approx 2\times10^{7}$ \\
+$O(n^{2})$ & Her satırı her satırla karşılaştırmak & $10^{12}$ \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\begin{kutu}
+\textbf{Çözümlü örnek.} Saniyede $10^{9}$ basit işlem yapan bir işlemci varsayalım. $n = 10^{6}$ satır için $O(n\log n)$ bir algoritma yaklaşık $2\times10^{7}/10^{9} = 0{,}02$ s sürer. $O(n^{2})$ bir algoritma ise $10^{12}/10^{9} = 1000$ s $\approx 17$ dakika sürer. Veri 10 kat büyürse ilki yaklaşık 12 kat, ikincisi 100 kat yavaşlar. Bu fark daha hızlı donanımla kapatılamaz.
+\end{kutu}
+
+\subsection{İkili arama}
+Sıralı bir listede ortadaki elemana bakılır; aranan değer küçükse sol yarıda, büyükse sağ yarıda aramaya devam edilir. Her adımda aday sayısı yarıya iner:
+\begin{equation}
+\frac{n}{2^{k}} = 1 \;\Rightarrow\; k = \log_2 n, \qquad \log_2 10^{6} \approx 19{,}9 .
+\end{equation}
+Bir milyon kayıtta en fazla 20 karşılaştırma yeter. Ön koşul verinin sıralı olmasıdır; sıralamanın bedeli $O(n\log n)$'dir. Veritabanı indeksleri (hafta 7) bu fikrin ağaç biçimidir.
+
+\subsection{Aynı soru, iki çözüm}
+``Her IP adresi kaç istek attı?'' sorusu iki biçimde çözülebilir:
+\begin{itemize}
+  \item \texttt{sort | uniq -c}: önce sırala ($O(n\log n)$), sonra ardışık aynı satırları say. \texttt{uniq} yalnızca yan yana duran satırları görür; sıralanmamış girdide yanlış sayar.
+  \item \texttt{awk '\{c[\$1]++\}'}: her satırda hash tablosunda bir sayacı artır ($O(n)$); sıralama yalnızca az sayıdaki sonuç için yapılır.
+\end{itemize}
+20.000 satırda fark hissedilmez; milyarlarca satırda belirleyici olur.
+
+%==============================================================
+\section{Unix felsefesi ve akışlar}
+Unix araçları üç ilkeye dayanır: her araç tek bir işi iyi yapar; araçlar birbirine düz metin satırlarıyla veri aktarır; boru hattı (\texttt{|}) küçük araçları bir veri işleme hattına dönüştürür. Her sürecin üç standart akışı vardır:
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}c l l Y@{}}
+\toprule
+\textbf{No} & \textbf{Akış} & \textbf{Yönlendirme} & \textbf{Örnek} \\
+\midrule
+0 & stdin & \texttt{<} & \texttt{wc -l < access.log} \\
+1 & stdout & \texttt{>}, \texttt{>>} & \texttt{ls > liste.txt} \\
+2 & stderr & \texttt{2>} & \texttt{find / -name x 2> /dev/null} \\
+1+2 & ikisi & \texttt{> dosya 2>\&1} & \texttt{betik.sh > log.txt 2>\&1} \\
+-- & boru hattı & \texttt{|} & \texttt{grep 404 access.log | wc -l} \\
+-- & çatal & \texttt{tee} & \texttt{rapor.sh | tee rapor.txt} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\texttt{cron} işlerinde \texttt{2>\&1} kritiktir: hata mesajları aksi halde kaybolur.
+
+%==============================================================
+\section{Bash betikleri}
+
+\subsection{Anatomi}
+\begin{kodblok}
+#!/usr/bin/env bash                 # shebang: hangi yorumlayıcı?
+set -euo pipefail                   # hata, tanımsız değişken, boru hatası hatasında dur
+LOG="${1:?kullanım: $0 access.log}"  # zorunlu argüman
+echo "Toplam istek: $(wc -l < "$LOG")"
+for kod in 200 404 500; do
+  n=$(awk -v k="$kod" '$9 == k' "$LOG" | wc -l)
+  echo "HTTP $kod: $n"
+done
+\end{kodblok}
+Bu betik \texttt{access.log} üzerinde şu çıktıyı verir: \texttt{Toplam istek: 20000}, \texttt{HTTP 200: 18164}, \texttt{HTTP 404: 1030}, \texttt{HTTP 500: 198}. Argümansız çalıştırılırsa hata mesajı basar ve çıkış kodu 1 olur.
+\begin{itemize}
+  \item \texttt{\$1}, \texttt{\$2} konumsal argümanlar; \texttt{\$\#} argüman sayısı; \texttt{\$@} tümü.
+  \item \texttt{\$?} son komutun çıkış kodu: 0 başarı, 0 dışı hata. \texttt{cron} ve CI sistemleri buna bakar.
+  \item \texttt{set -e} olmadan betik hatadan sonra sessizce devam eder ve yarım dosyalar üretir; veri hatlarında en tehlikeli hata biçimidir.
+  \item Değişkenleri her zaman tırnak içinde kullanın: \texttt{"\$LOG"}. Boşluk içeren dosya adları aksi halde bölünür.
+\end{itemize}
+
+\subsection{Metin araçları}
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l Y l@{}}
+\toprule
+\textbf{Komut} & \textbf{Görevi} & \textbf{Örnek} \\
+\midrule
+\texttt{grep} & Desene uyan satırları süz & \texttt{grep " 500 " access.log} \\
+\texttt{cut} & Sütun kes & \texttt{cut -d, -f3 satislar.csv} \\
+\texttt{sort} & Sırala (\texttt{-n} sayısal, \texttt{-r} ters) & \texttt{sort -rn} \\
+\texttt{uniq -c} & Ardışık aynıları say & \texttt{sort | uniq -c} \\
+\texttt{sed} & Bul ve değiştir & \texttt{sed 's/NA//g'} \\
+\texttt{awk} & Alan tabanlı küçük programlar & \texttt{awk '\{print \$1\}'} \\
+\texttt{jq} & JSON sorgula & \texttt{jq '.[].model'} \\
+\texttt{wc -l} & Satır say & \texttt{wc -l access.log} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\texttt{awk} kendi başına bir programlama dilidir \cite{gawk3}: alanlar \texttt{\$1}, \texttt{\$2} …, son alan \texttt{\$NF}, satır numarası \texttt{NR}, alan ayırıcı \texttt{-F}.
+
+\subsection{cron}
+\texttt{cron} beş zaman alanı ve bir komuttan oluşan satırlarla işleri zamanlar: dakika, saat, ayın günü, ay, haftanın günü.
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{İfade} & \textbf{Anlamı} \\
+\midrule
+\texttt{0 * * * *} & Her saat başı \\
+\texttt{*/15 * * * *} & Her 15 dakikada bir \\
+\texttt{30 2 * * 1} & Her pazartesi 02:30 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\texttt{cron} kısa bir \texttt{PATH} ile çalışır; komut ve dosyalarda tam yol kullanılmalıdır (Hafta 1'deki PATH görevinin doğrudan uygulaması).
+
+%==============================================================
+\section{Uygulama: access.log çözümlemesi}
+Ders klasöründeki \texttt{access.log} dosyası 20.000 satırlık sentetik bir web sunucusu günlüğüdür. Aşağıdaki tüm çıktılar bu dosya üzerinde gerçekten çalıştırılarak alınmıştır.
+
+\subsection{Alanları tanıyın}
+\begin{kodblok}
+$ head -1 access.log
+10.0.7.121 - - [12/Oct/2026:00:03:06 +0300] "GET /index.html HTTP/1.1" 200 1596 "-" "Mozilla/5.0 (X11; Linux x86_64)" 0.085
+$ head -1 access.log | tr " " "\n" | nl | sed -n '1p;4p;6,7p;9,10p'
+     1  10.0.7.121
+     4  [12/Oct/2026:00:03:06
+     6  "GET
+     7  /index.html
+     9  200
+    10  1596
+\end{kodblok}
+Son alan (\texttt{\$NF}) saniye cinsinden yanıt süresidir.
+
+\subsection{Soru 1: Kim en çok istek atıyor?}
+\begin{kodblok}
+$ awk '{print $1}' access.log | sort | uniq -c | sort -rn | head -5
+   3996 10.0.6.125
+   1904 10.0.1.139
+   1169 10.0.7.121
+    883 10.0.3.250
+    706 10.0.8.48
+\end{kodblok}
+Tek bir IP günün yaklaşık \%20'sini üretiyor: bir bot, yük testi ya da saldırı olabilir.
+
+\subsection{Soru 2: Durum kodları}
+\begin{kodblok}
+$ awk '{c[$9]++} END {for (k in c) print c[k], k}' access.log | sort -rn
+18164 200
+1030 404
+608 403
+198 500
+$ grep -c '"GET /admin' access.log
+608
+\end{kodblok}
+Tüm 403 yanıtları \texttt{/admin} yolundan geliyor: yetkisiz erişim denemeleri. 500 hataları yalnızca API uç noktalarında.
+
+\subsection{Soru 3: Model API'sinin yanıt süresi ve yoğun saatler}
+\begin{kodblok}
+$ awk '$7=="/api/predict" {s+=$NF; n++} END {printf "%d istek, ort. %.3f s\n", n, s/n}' access.log
+6785 istek, ort. 0.340 s
+$ awk -F'[][]' '{split($2,a,":"); print a[2]}' access.log | sort | uniq -c | sort -rn | head -3
+   2077 13
+   1941 14
+   1874 15
+\end{kodblok}
+Yanıt süreleri sağa çarpıktır; ortalama yanıltıcı olabilir. 6. haftada yüzdelikleri (p95) göreceğiz.
+
+\subsection{CSV temizliği}
+\begin{kodblok}
+$ wc -l satislar.csv
+1226 satislar.csv
+$ awk -F, 'NR>1 && $5==""' satislar.csv | wc -l      # eksik adet
+35
+$ sort satislar.csv | uniq -d | wc -l                 # yinelenen satır
+25
+$ sed -E 's/, +/,/g; s/ +,/,/g' satislar.csv | awk -F, '!seen[$0]++' > temiz.csv
+$ wc -l < temiz.csv
+1201
+\end{kodblok}
+\texttt{awk '!seen[\$0]++'} yinelenenleri sıralamadan atar ve satır sırasını korur: yine bir hash tablosu, $O(n)$.
+
+\subsection{JSON ve jq}
+\begin{kodblok}
+$ jq -r '.[] | select(.metrikler.dogruluk > 0.9) | "\(.deney) \(.model) \(.metrikler.dogruluk)"' deneyler.json
+exp06 xgboost 0.923
+exp07 xgboost 0.915
+exp11 xgboost 0.902
+$ jq 'map(.sure_sn) | add' deneyler.json
+1311.9999999999998
+$ jq -r 'sort_by(-.metrikler.f1)[0].deney' deneyler.json
+exp05
+\end{kodblok}
+Toplamın $1312$ yerine $1311{,}9999\ldots$ çıkması bir kayan nokta yuvarlama etkisidir: $0{,}1$ gibi ondalık sayılar ikili tabanda tam gösterilemez. Para hesaplarında bu nedenle ondalık türler kullanılır (hafta 7, \texttt{NUMERIC}).
+
+\subsection{cron ile zamanlama}
+\begin{kodblok}
+$ systemctl is-active cron
+$ crontab -e
+0 * * * * $HOME/mbbo205/hafta03/rapor.sh $HOME/mbbo205/hafta03/access.log >> $HOME/mbbo205/hafta03/cron.log 2>&1
+$ crontab -l
+$ tail -f ~/mbbo205/hafta03/cron.log
+\end{kodblok}
+Test için \texttt{*/2 * * * *} kullanılıp iki dakika beklenebilir. WSL'de cron çalışmıyorsa: \texttt{sudo systemctl enable --now cron}.
+
+%==============================================================
+\section{Laboratuvar görevi}
+
+\subsection{Ana görev: \texttt{log\_raporu.sh}}
+Aşağıdaki iskeleti tamamlayın. Rapor şunları içermelidir: en çok istek atan 10 IP; durum kodu dağılımı ve 5xx oranı (\%); \texttt{/api/predict} için ortalama ve en yüksek yanıt süresi; en yoğun 3 saat. Çıktı \texttt{rapor\_TARIH.txt} dosyasına yazılır ve betik \texttt{cron}'a eklenir.
+\begin{kodblok}
+#!/usr/bin/env bash
+set -euo pipefail
+LOG="${1:?kullanım: $0 access.log}"
+OUT="rapor_$(date +%F).txt"
+{
+  echo "== En çok istek atan 10 IP =="
+  awk '{print $1}' "$LOG" | sort | uniq -c | sort -rn | head -10
+  # ... diğer bölümleri siz ekleyin
+} | tee "$OUT"
+\end{kodblok}
+
+\subsection{Bozuk sistem görevi: Windows'tan gelen betik}
+Bir arkadaşınız \texttt{temizle.sh} betiğini Windows'ta düzenleyip göndermiş:
+\begin{kodblok}
+$ chmod +x temizle.sh && ./temizle.sh
+/usr/bin/env: 'bash\r': No such file or directory
+$ file temizle.sh
+temizle.sh: Bourne-Again shell script, ASCII text executable, with CRLF line terminators
+$ cat -A temizle.sh | head -1
+#!/usr/bin/env bash^M$
+\end{kodblok}
+\textbf{Görev:} belirtiyi, hipotezleri ve testleri yazın; betiği düzeltin; \texttt{KOK\_NEDEN\_RAPORU.md} şablonunu doldurun; önleme için iki öneri verin.
+
+\textbf{İpucu:} \texttt{\^{}M} karakteri \texttt{\textbackslash r} (satır başı) karakteridir. Windows satır sonu CRLF (\texttt{\textbackslash r\textbackslash n}), Linux satır sonu LF (\texttt{\textbackslash n}) kullanır. Düzeltilen betik \texttt{satislar\_temiz.csv} için 1191 satır raporlamalıdır.
+
+\subsection{Teslim listesi}
+\begin{itemize}
+  \item \texttt{log\_raporu.sh} ve \texttt{rapor\_TARIH.txt}
+  \item \texttt{crontab -l} çıktısı
+  \item \texttt{KOK\_NEDEN\_RAPORU.md} (CRLF)
+  \item \texttt{temiz.csv} için satır sayısı
+\end{itemize}
+Son teslim: [tarih, saat] \quad Teslim yeri: [LMS / e-posta]
+
+%==============================================================
+\section{Kendinizi sınayın}
+\begin{enumerate}
+  \item $T(n) = 5n\log_2 n + 200n$ fonksiyonunun O-notasyonundaki sınıfı nedir? Neden?
+  \item Sıralı bir telefon rehberinde 10 milyon kayıt var. İkili aramayla en fazla kaç karşılaştırmada bir adı bulursunuz?
+  \item \texttt{uniq -c access.log} komutu neden yanlış sonuç verir? Doğrusu nedir?
+  \item \texttt{komut > cikti.txt 2>\&1} ile \texttt{komut 2>\&1 > cikti.txt} arasındaki fark nedir?
+  \item \texttt{access.log} içinde her yol (\texttt{\$7}) için 404 sayısını veren bir \texttt{awk} komutu yazın.
+  \item \texttt{set -u} bir betiği hangi hataya karşı korur? Örnek verin.
+  \item ``Her iş günü 08:45'te'' çalışacak bir cron ifadesi yazın.
+  \item \texttt{jq} ile \texttt{deneyler.json} içinden model türüne göre ortalama doğruluğu hesaplayın (ipucu: \texttt{group\_by}).
+\end{enumerate}
+
+\section*{Hafta 4 için hazırlık}
+Bir bulut sağlayıcıda öğrenci hesabı açın; kredi kartı gerekiyorsa bildirin (okul sunucusunda alternatif hazırlanacak). SSH anahtarınızın hazır olduğundan emin olun.
+
+%==============================================================
+\begin{thebibliography}{99}\small
+\bibitem{gawk3} Free Software Foundation, \emph{The GNU Awk User's Guide}. \url{https://www.gnu.org/software/gawk/manual/gawk.html}
+\bibitem{bashref} GNU, \emph{Bash Reference Manual}. \url{https://www.gnu.org/software/bash/manual/bash.html}
+\bibitem{jqman} jq 1.7 Manual. \url{https://jqlang.org/manual/}
+\bibitem{crontab5} Linux man-pages, \emph{crontab(5)}. \url{https://man7.org/linux/man-pages/man5/crontab.5.html}
+\bibitem{clrs} T. H. Cormen, C. E. Leiserson, R. L. Rivest, C. Stein, \emph{Introduction to Algorithms}, 4. baskı, MIT Press, 2022. \url{https://mitpress.mit.edu/9780262046305/introduction-to-algorithms/}
+\bibitem{missing3} MIT, \emph{The Missing Semester}, ``Data Wrangling.'' \url{https://missing.csail.mit.edu/2020/data-wrangling/}
+\end{thebibliography}
+
+\end{document}

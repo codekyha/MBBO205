@@ -1,0 +1,9 @@
+musteri_id: {tip: int, benzersiz: true}
+yas: {tip: int, min: 18, max: 100}
+gelir: {tip: float, min: 0, max: 500000}
+kidem_ay: {tip: int, min: 0, max: 240}
+aylik_islem: {tip: int, min: 0, max: 200}
+sehir: {tip: str, degerler: [Istanbul, Ankara, Izmir, Bursa, Antalya]}
+segment: {tip: str, degerler: [Bireysel, KOBI, Kurumsal]}
+harcama: {tip: float, min: 0}
+ayrildi: {tip: int, degerler: [0, 1]}
