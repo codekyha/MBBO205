@@ -1,0 +1,4 @@
+.venv/
+veri/*.csv
+model/*.pkl
+__pycache__/

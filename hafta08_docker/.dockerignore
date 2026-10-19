@@ -1,0 +1,4 @@
+cikti/
+__pycache__/
+*.pkl
+.venv/
