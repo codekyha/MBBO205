@@ -1,0 +1,7 @@
+services:
+  api:
+    image: python:3.12-slim
+    command: python -m http.server 8000
+    working_dir: /srv
+    volumes: ["./icerik:/srv"]
+    ports: ["8080:80"]

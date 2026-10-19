@@ -1,0 +1,3 @@
+Aşağıdaki müşteri yorumunu tek cümlede özetle ve duygusunu (olumlu/olumsuz/nötr) belirt:
+
+{metin}

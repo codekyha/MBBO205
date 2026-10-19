@@ -1,0 +1,4 @@
+Aşağıdaki müşteri yorumunu analiz et ve YALNIZCA şu JSON şemasına uyan bir nesne döndür, başka hiçbir metin yazma:
+{{"duygu": "olumlu|olumsuz|notr", "konu": "teknik|fiyat|destek|teslimat|diger", "aciliyet": 1-5 arası tamsayı, "ozet": "en fazla 12 kelime"}}
+
+Yorum: {metin}
