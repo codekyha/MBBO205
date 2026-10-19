@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+cikti/
+*.pkl
+*.png
+*.log
+.env
+minio-veri/

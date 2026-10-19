@@ -1,0 +1,7 @@
+[
+ {"id": 1, "sehir": "Istanbul", "sicaklik": 21.4, "nem": 63, "zaman": "2026-10-01T10:00:00"},
+ {"id": 2, "sehir": "Ankara", "sicaklik": 14.8, "nem": 41, "zaman": "2026-10-01T10:00:00"},
+ {"id": 3, "sehir": "Izmir", "sicaklik": 24.1, "nem": 55, "zaman": "2026-10-01T10:00:00"},
+ {"id": 4, "sehir": "Bursa", "sicaklik": 19.0, "nem": 70, "zaman": "2026-10-01T10:00:00"},
+ {"id": 5, "sehir": "Antalya", "sicaklik": 27.3, "nem": 48, "zaman": "2026-10-01T10:00:00"}
+]
