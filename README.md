@@ -68,4 +68,4 @@ make temizle      # üretilen çıktı dosyalarını (cikti/, *.pkl, *.png) sile
 
 ## Lisans
 
-Ders materyali olarak MIT lisansıyla paylaşılır; öğrenciler kendi projelerinde serbestçe kullanabilir.
+Ders materyali olarak MIT lisansıyla paylaşılır; öğrenciler kendi projelerinde serbestçe kullanabilir. Bu materyaller, her ne şekilde olursa olsun hiçbir garanti verilmeksizin "olduğu gibi" sunulmaktadır; yazar, bunların kullanımından doğabilecek hiçbir sorumluluğu kabul etmez.
